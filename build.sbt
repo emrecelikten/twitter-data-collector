@@ -1,6 +1,8 @@
+import scalariform.formatter.preferences.PreserveSpaceBeforeArguments
+
 name := "FoursquareDataCollector"
 
-version := "0.1-SNAPSHOT"
+version := "0.2-SNAPSHOT"
 
 scalaVersion := "2.11.6"
 
@@ -15,4 +17,4 @@ libraryDependencies ++= List(
 scalariformSettings
 
 ScalariformKeys.preferences := ScalariformKeys.preferences.value
-  .setPreference(preserveSpaceBeforeArguments, true)
+  .setPreference(PreserveSpaceBeforeArguments, true)
