@@ -50,7 +50,7 @@ class TwitterDownloaderActor(processorRouterPath: ActorPath) extends Actor {
         context.actorSelection(processorRouterPath) ! TweetMessage(tweet)
         self ! Consume
       } else {
-        // Queue is empty, sleep for 15 seconds, then check again
+        // Queue is empty, sleep for 5 seconds, then check again
         context.system.scheduler.scheduleOnce(FiniteDuration(5, TimeUnit.SECONDS), self, Consume)(context.dispatcher)
       }
 
