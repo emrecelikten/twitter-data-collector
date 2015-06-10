@@ -19,8 +19,8 @@ class TwitterProcessorRouter(unprocessedSaverActorPath: ActorPath, processedSave
     Router(SmallestMailboxRoutingLogic(), workers)
   }
 
-  private val logger = Logging(context.system, this)
-  logger.info("ProcessorRouter ready with routees.")
+  private implicit val loggingAdapter = Logging(context.system, this)
+  Logger.info("ProcessorRouter ready with routees.")
 
   override def receive: Receive = {
     case msg: TweetMessage =>
@@ -31,7 +31,7 @@ class TwitterProcessorRouter(unprocessedSaverActorPath: ActorPath, processedSave
       context watch r
       router = router.addRoutee(r)
     case other =>
-      logger.warning(s"Invalid message received from $sender:\n$other")
+      Logger.warn(s"Invalid message received from $sender:\n$other")
   }
 }
 

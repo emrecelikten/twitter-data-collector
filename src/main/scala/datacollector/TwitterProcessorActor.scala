@@ -11,18 +11,18 @@ import scala.util.matching.Regex
  * @author Emre Çelikten
  */
 class TwitterProcessorActor(unprocessedSaverActorPath: ActorPath, processedSaverActorPath: ActorPath) extends Actor {
-  private val logger = Logging(context.system, this)
+  private implicit val loggingAdapter = Logging(context.system, this)
 
-  logger.info("ProcessorActor is online.")
+  Logger.info("ProcessorActor is online.")
 
   override def receive: Receive = {
     case TweetMessage(tweet) =>
       if (TwitterProcessorActor.regex.findFirstIn(tweet).nonEmpty) {
         context.actorSelection(unprocessedSaverActorPath) ! tweet
         // TODO: Process?
-      } else logger.warning("Invalid tweet received.")
+      } else Logger.debug(s"Invalid tweet received:\n$tweet")
     case other =>
-      logger.warning(s"Invalid message received from $sender:\n$other")
+      Logger.warn(s"Invalid message received from $sender:\n$other")
   }
 }
 

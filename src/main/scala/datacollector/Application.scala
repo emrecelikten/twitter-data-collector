@@ -17,42 +17,46 @@ import scala.concurrent.duration.FiniteDuration
  */
 object Application {
 
-  val system = ActorSystem("foursquare-data-collector")
-
   def main(args: Array[String]) {
-    val outputPath = new File(Configuration.conf.getString("outputPath"))
-
-    if (!outputPath.exists) {
-      try {
-        outputPath.mkdirs()
-      } catch {
-        case ex: Exception => logger.error("Error while creating directories for the output path.\n" + ex.getStackTrace.mkString)
-      }
-    }
-
-    if (!outputPath.canWrite) {
-      logger.error(s"Cannot write to the output path '$outputPath' specified at application configuration! Exiting...")
+    if (!Configuration.init(args(0))) {
+      println("Error while initializing configuration. Exiting...")
     } else {
-      logger.info("All is well regarding file permissions, starting up the system...")
+      val outputPath = new File(Configuration.configuration.outputPath)
 
-      val keywords = List("swarmapp com c")
+      if (!outputPath.exists) {
+        try {
+          outputPath.mkdirs()
+        } catch {
+          case ex: Exception =>
+            println("Error while creating directories for the output path. Please check file permissions. Exiting...\n" +
+              Utils.getStackTraceString(ex))
+        }
+      } else if (!outputPath.canWrite) {
+        println(s"Cannot write to the output path '$outputPath' specified at application configuration! Exiting...")
+      } else {
+        println("All is well regarding file permissions, starting up the system...")
 
-      val supervisorActor = system.actorOf(TwitterSupervisorActor.props(outputPath, Some(keywords)))
+        val keywords = Configuration.configuration.keywords
 
-      logger.info("Starting supervisor actor...")
+        val system = ActorSystem("foursquare-data-collector")
 
-      supervisorActor ! Start
+        val supervisorActor = system.actorOf(TwitterSupervisorActor.props(outputPath, keywords))
 
-      println("Type exit to quit.")
-      val waitingTime = FiniteDuration(120, TimeUnit.SECONDS)
-      implicit val timeout: Timeout = Timeout(waitingTime)
+        Logger.debug("Starting supervisor actor...")
 
-      for (ln <- io.Source.stdin.getLines()) {
-        if (ln.compareTo("exit") == 0) {
-          logger.info("Exit command received from user, starting graceful stop.")
-          val f = supervisorActor ? Stop
-          Await.result(f, waitingTime)
-          System.exit(0)
+        supervisorActor ! Start
+
+        println("Type exit to quit.")
+        val waitingTime = FiniteDuration(Configuration.configuration.gracefulShutdownDuration, TimeUnit.MILLISECONDS)
+        implicit val timeout: Timeout = Timeout(waitingTime)
+
+        for (ln <- io.Source.stdin.getLines()) {
+          if (ln.compareTo("exit") == 0) {
+            println("Exit command received from user, starting graceful stop.")
+            val f = supervisorActor ? Stop
+            Await.result(f, waitingTime)
+            System.exit(0)
+          }
         }
       }
     }

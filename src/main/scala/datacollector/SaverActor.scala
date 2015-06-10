@@ -1,6 +1,8 @@
 package datacollector
 
 import java.io.{ BufferedWriter, File, FileOutputStream, OutputStreamWriter }
+import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.zip.GZIPOutputStream
 
 import akka.actor.{ Actor, Props }
@@ -11,31 +13,46 @@ import akka.event.Logging
  *
  * @author Emre Çelikten
  */
-class SaverActor(file: File) extends Actor {
-  private val logger = Logging(context.system, this)
+class SaverActor(val filePrefix: String, val configuration: ConfigurationModule) extends Actor {
+  private implicit val loggingContext = Logging(context.system, this)
 
-  private val writer = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(file))))
-  logger.info(s"SaverActor ready, will save to ${file.toString}.")
+  private val df = new SimpleDateFormat("yy.MM.dd-HH.mm.ss")
+  var (file, writer) = createWriter()
+  Logger.info(s"SaverActor ready, will save to ${file.toString}.")
 
   override def receive: Receive = {
     case str: String =>
       try {
         writer.write(str)
       } catch {
-        case e: Exception =>
-          logger.error(e.getStackTrace.mkString("\n"))
+        case ex: Exception =>
+          Logger.error(s"Error while writing to file $file.\n" + Utils.getStackTraceString(ex))
+
+          try {
+            writer.close()
+            throw ex
+          } catch {
+            case ex: Exception =>
+              Logger.error(s"Error while closing the writer after an error while writing to file $file!\n" + Utils.getStackTraceString(ex))
+              throw ex
+          }
       }
     case other =>
-      logger.warning(s"Invalid message received from ${sender()}:\n$other")
+      Logger.warn(s"Invalid message received from ${sender()}:\n$other")
   }
 
   override def postStop(): Unit = {
-    logger.info("Flushing output and closing stream.")
+    Logger.info("Flushing output and closing stream.")
     writer.flush()
     writer.close()
+  }
+
+  def createWriter(): (File, BufferedWriter) = {
+    val file = new File(configuration.outputPath, filePrefix + "." + df.format(Calendar.getInstance().getTime) + ".gz")
+    (file, new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(file)))))
   }
 }
 
 object SaverActor {
-  def props(file: File): Props = Props(new SaverActor(file))
+  def props(filePrefix: String): Props = Props(new SaverActor(filePrefix, Configuration.configuration))
 }

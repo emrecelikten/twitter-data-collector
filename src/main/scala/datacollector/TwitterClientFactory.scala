@@ -8,7 +8,6 @@ import com.twitter.hbc.core.event.Event
 import com.twitter.hbc.core.processor.StringDelimitedProcessor
 import com.twitter.hbc.core.{ Client, Constants, HttpHosts }
 import com.twitter.hbc.httpclient.auth.Authentication
-
 import scala.collection.JavaConversions._
 
 /**
@@ -16,11 +15,22 @@ import scala.collection.JavaConversions._
  *
  * @author Emre Çelikten
  */
-object TwitterClientFactory {
-  def getClientAndQueues(authentication: Authentication, keywords: Option[List[String]] = None, msgQueueSize: Int = 100000, eventQueueSize: Int = 1000): (Client, LinkedBlockingQueue[String], LinkedBlockingQueue[Event]) = {
+
+trait TwitterClientFactoryModule {
+  def getClientAndQueues(
+    authentication: Authentication,
+    keywords: Option[List[String]]
+  ): (Client, LinkedBlockingQueue[String], LinkedBlockingQueue[Event])
+}
+
+object TwitterClientFactory extends TwitterClientFactoryModule {
+  def getClientAndQueues(
+    authentication: Authentication,
+    keywords: Option[List[String]]
+  ): (Client, LinkedBlockingQueue[String], LinkedBlockingQueue[Event]) = {
     /** Set up your blocking queues: Be sure to size these properly based on expected TPS of your stream */
-    val msgQueue = new LinkedBlockingQueue[String](msgQueueSize)
-    val eventQueue = new LinkedBlockingQueue[Event](eventQueueSize)
+    val msgQueue = new LinkedBlockingQueue[String](Configuration.configuration.msgQueueSize)
+    val eventQueue = new LinkedBlockingQueue[Event](Configuration.configuration.eventQueueSize)
 
     val hosebirdHosts = new HttpHosts(Constants.STREAM_HOST)
     val hosebirdEndpoint = keywords match {
@@ -32,7 +42,7 @@ object TwitterClientFactory {
     }
 
     val builder = new ClientBuilder()
-      .name("Hosebird-Client-01") // optional: mainly for the logs
+      .name("TwitterClient")
       .hosts(hosebirdHosts)
       .authentication(authentication)
       .endpoint(hosebirdEndpoint)

@@ -21,18 +21,14 @@ import scala.concurrent.duration.FiniteDuration
 class TwitterSupervisorActor(outputPath: File, keywords: Option[List[String]]) extends Actor {
   private val logger = Logging(context.system, this)
 
-  private val df = new SimpleDateFormat("yy.MM.dd-HH.mm.ss")
-
   private val unprocessedSaverActor = {
-    val filename = df.format(Calendar.getInstance().getTime) + ".gz"
-    val outputFile = new File(outputPath, filename)
-    context.actorOf(SaverActor.props(outputFile), "unprocessed-saver")
+    val filePrefix = "twitter-raw"
+    context.actorOf(SaverActor.props(filePrefix), "twitter-raw-saver")
   }
 
   private val processedSaverActor = {
-    val filename = df.format(Calendar.getInstance().getTime) + ".processed.gz"
-    val outputFile = new File(outputPath, filename)
-    context.actorOf(SaverActor.props(outputFile), "processed-saver")
+    val filePrefix = "twitter-processed"
+    context.actorOf(SaverActor.props(filePrefix), "processed-saver")
   }
 
   private val processorRouter = context.actorOf(TwitterProcessorRouter.props(unprocessedSaverActor.path, processedSaverActor.path), "processor-router")
