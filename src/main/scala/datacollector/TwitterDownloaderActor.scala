@@ -105,7 +105,7 @@ class TwitterDownloaderActor(
       if (msgQueue.size() > configuration.msgQueueWarningSize) {
         val curTime = System.currentTimeMillis()
         if (curTime - lastQueueSizeWarningTime > configuration.msgQueueWarningDuration) {
-          logger.warn(s"Downloaded message queue size is growing dangerously: " + msgQueue.size())
+          logger.warn(s"Downloaded message queue size is growing dangerously: " + msgQueue.size(), configuration.emailOnQueueWarning)
           lastQueueSizeWarningTime = curTime
         }
       }

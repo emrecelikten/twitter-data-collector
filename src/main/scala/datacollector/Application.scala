@@ -16,9 +16,10 @@ import scala.concurrent.duration.FiniteDuration
  * @author Emre Çelikten
  */
 object Application {
+  var actorSystem: ActorSystem = _
 
   def main(args: Array[String]) {
-    if (!Configuration.init(args(0))) {
+    if (!Configuration.init(sys.props.get("config").getOrElse("application.conf"))) {
       println("Error while initializing configuration. Exiting...")
     } else {
       val outputPath = new File(Configuration.configuration.outputPath)
@@ -38,9 +39,9 @@ object Application {
 
         val keywords = Configuration.configuration.keywords
 
-        val system = ActorSystem("foursquare-data-collector")
+        actorSystem = ActorSystem("foursquare-data-collector")
 
-        val supervisorActor = system.actorOf(TwitterSupervisorActor.props(outputPath, keywords))
+        val supervisorActor = actorSystem.actorOf(TwitterSupervisorActor.props(outputPath, keywords), "supervisor")
 
         Logger.debug("Starting supervisor actor...")
 

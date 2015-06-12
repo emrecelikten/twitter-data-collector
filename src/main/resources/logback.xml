@@ -85,7 +85,7 @@
     </appender>
 
     <logger name="akka" level="INFO" />
-    <logger name="root" level="DEBUG" />
+    <logger name="root" level="INFO" />
 
     <root>
         <appender-ref ref="CONSOLE"/>
@@ -94,12 +94,4 @@
         <appender-ref ref="WARN-FILE"/>
         <appender-ref ref="ERROR-FILE"/>
     </root>
-
-    <akka>
-        <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="DEBUG-FILE"/>
-        <appender-ref ref="INFO-FILE"/>
-        <appender-ref ref="WARN-FILE"/>
-        <appender-ref ref="ERROR-FILE"/>
-    </akka>
 </configuration>

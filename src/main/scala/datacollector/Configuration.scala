@@ -6,6 +6,7 @@ import com.twitter.hbc.httpclient.auth.{ Authentication, OAuth1 }
 import com.typesafe.config.{ Config, ConfigFactory }
 
 import scala.collection.JavaConversions._
+import scala.util.Try
 import scala.util.matching.Regex
 
 /**
@@ -40,11 +41,10 @@ trait ConfigurationModule {
   val msgQueueSize: Int = safeLoad(conf.getInt, "twitter.size.msgQueue")
   val eventQueueSize: Int = safeLoad(conf.getInt, "twitter.size.eventQueue")
   val msgQueueWarningSize: Int = safeLoad(conf.getInt, "twitter.size.queueWarning")
-
-  val emailsEnabled: Boolean = safeLoad(conf.getBoolean, "twitter.enableEmails")
+  val emailOnQueueWarning: Boolean = safeLoad(conf.getBoolean, "email.emailOnQueueWarning")
 
   protected def safeLoad[T](getM: String => T, configurationKey: String): T = {
-    Option(getM(configurationKey)).getOrElse {
+    Try(getM(configurationKey)).getOrElse {
       throw new RuntimeException(s"Error while reading configuration: Missing configuration key for '$configurationKey'!")
     }
   }
@@ -55,12 +55,19 @@ trait ConfigurationModule {
   val foursquareResolveUrl: String = safeLoad(conf.getString, "foursquare.resolveUrl")
 
   val outputPath: String = safeLoad(conf.getString, "outputPath")
+
+  val emailsEnabled: Boolean = safeLoad(conf.getBoolean, "email.enableEmails")
+  val emailAddresses: List[String] = safeLoad(conf.getStringList, "email.addresses").toList
+  val emailSmtpHost: String = safeLoad(conf.getString, "email.smtp.host")
+  val emailSmtpPort: Int = safeLoad(conf.getInt, "email.smtp.port")
+  val emailUsername: String = safeLoad(conf.getString, "email.username")
+  val emailPassword: String = safeLoad(conf.getString, "email.password")
 }
 
 object Configuration {
   final var configuration: ConfigurationModule = _
 
-  def init(configPath: String = "application.conf"): Boolean = {
+  def init(configPath: String): Boolean = {
     try {
       configuration = new {
         override protected val conf: Config = ConfigFactory.load(configPath)

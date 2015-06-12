@@ -1,14 +1,12 @@
 package datacollector
 
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{ Actor, Props }
-import akka.pattern.gracefulStop
-import datacollector.TwitterSupervisorActor.{ Stop, Start, WriteError }
 import akka.event.Logging
+import akka.pattern.gracefulStop
+import datacollector.TwitterSupervisorActor.{ Start, Stop, WriteError }
 
 import scala.concurrent.Await
 import scala.concurrent.duration.FiniteDuration
@@ -33,6 +31,7 @@ class TwitterSupervisorActor(outputPath: File, keywords: Option[List[String]]) e
 
   private val processorRouter = context.actorOf(TwitterProcessorRouter.props(unprocessedSaverActor.path, processedSaverActor.path), "processor-router")
   private val downloaderActor = context.actorOf(TwitterDownloaderActor.props(processorRouter.path), "downloader")
+  private val emailerActor = context.actorOf(Props[EmailerActor], "emailer")
 
   override def receive: Receive = {
     case Start =>
