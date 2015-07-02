@@ -4,7 +4,7 @@ enablePlugins(JavaAppPackaging)
 
 name := "FoursquareDataCollector"
 
-version := "0.3-SNAPSHOT"
+version := "0.4-SNAPSHOT"
 
 scalaVersion := "2.11.7"
 mainClass in Compile := Some("datacollector.Application")
@@ -27,6 +27,8 @@ libraryDependencies ++= List(
 maintainer := "Emre Çelikten"
 packageSummary := "Foursquare data collector"
 packageDescription := "Collects data from Twitter streaming API for Swarm checkins."
+
+mappings in (Compile, packageBin) ~= { _.filterNot{ case (_, filename) => println(filename); (filename contains ".conf") || (filename contains ".xml") } }
 
 mappings in Universal <++= (packageBin in Compile, sourceDirectory ) map { (_, src) =>
   // we are using the reference.conf as default application.conf
