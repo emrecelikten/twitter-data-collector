@@ -62,14 +62,13 @@ class EmailerActor extends Actor {
 
     try {
       email.send()
-
-      lastSent = System.currentTimeMillis()
-      sendPending = false
       logger.info(s"Email sent.")
     } catch {
       case e: Exception => logger.warn("Failed to send email.\n" + Utils.getStackTraceString(e)) // TODO: Does nothing for now, reschedule sending
     }
 
+    lastSent = System.currentTimeMillis()
+    sendPending = false
   }
 }
 
