@@ -28,7 +28,7 @@ maintainer := "Emre Çelikten"
 packageSummary := "Foursquare data collector"
 packageDescription := "Collects data from Twitter streaming API for Swarm checkins."
 
-mappings in (Compile, packageBin) ~= { _.filterNot{ case (_, filename) => println(filename); (filename contains ".conf") || (filename contains ".xml") } }
+mappings in (Compile, packageBin) ~= { _.filterNot{ case (_, filename) => (filename contains ".conf") || (filename contains ".xml") } }
 
 mappings in Universal <++= (packageBin in Compile, sourceDirectory ) map { (_, src) =>
   // we are using the reference.conf as default application.conf
