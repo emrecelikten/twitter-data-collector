@@ -16,7 +16,7 @@ import akka.event.Logging
 class SaverActor(val filePrefix: String, val configuration: ConfigurationModule) extends Actor {
   private implicit val loggingContext = Logging(context.system, this)
 
-  private val df = new SimpleDateFormat("yy.MM.dd-HH.mm.ss")
+  private val df = new SimpleDateFormat("yyyy.MM.dd-HH.mm.ss")
   var (file, writer) = createWriter()
   Logger.info(s"SaverActor ready, will save to ${file.toString}.")
 
