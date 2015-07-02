@@ -22,7 +22,7 @@ class EmailerActor extends Actor {
   val queue = new mutable.Queue[String]
   var lastSent: Long = 0L
   var sendPending: Boolean = false
-  val interval = 10 * 60 * 1000
+  val interval = 10 * 60 * 1000 // TODO: Make this configurable
 
   override def receive: Receive = {
     case text: String =>
@@ -59,11 +59,17 @@ class EmailerActor extends Actor {
     email.setMsg(builder.toString())
 
     Configuration.configuration.emailAddresses.foreach(e => email.addTo(e))
-    email.send()
 
-    lastSent = System.currentTimeMillis()
-    sendPending = false
-    logger.info(s"Email sent.")
+    try {
+      email.send()
+
+      lastSent = System.currentTimeMillis()
+      sendPending = false
+      logger.info(s"Email sent.")
+    } catch {
+      case e: Exception => logger.warn("Failed to send email.\n" + Utils.getStackTraceString(e)) // TODO: Does nothing for now, reschedule sending
+    }
+
   }
 }
 

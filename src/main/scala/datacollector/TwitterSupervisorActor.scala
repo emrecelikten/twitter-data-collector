@@ -3,13 +3,13 @@ package datacollector
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-import akka.actor.{ Actor, Props }
+import akka.actor.SupervisorStrategy.{ Stop, Escalate, Resume, Restart }
+import akka.actor.{ OneForOneStrategy, Actor, Props }
 import akka.event.Logging
 import akka.pattern.gracefulStop
-import datacollector.TwitterSupervisorActor.{ Start, Stop, WriteError }
 
 import scala.concurrent.Await
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 
 /**
  * A supervisor actor for maintaining the whole operation. Allows graceful stop and error handling.
@@ -32,26 +32,28 @@ class TwitterSupervisorActor(outputPath: File, keywords: Option[List[String]]) e
   private val processorRouter = context.actorOf(TwitterProcessorRouter.props(unprocessedSaverActor.path, processedSaverActor.path), "processor-router")
   private val downloaderActor = context.actorOf(TwitterDownloaderActor.props(processorRouter.path), "downloader")
   private val emailerActor = context.actorOf(Props[EmailerActor], "emailer")
+  private val heartbeatActor = context.actorOf(HeartBeatActor.props(Map(downloaderActor.path -> "TwitterDownloaderActor")))
 
   override def receive: Receive = {
-    case Start =>
+    case TwitterSupervisorActor.Start =>
       logger.info(s"Supervisor received start event.")
       downloaderActor ! TwitterDownloaderActor.Start(keywords)
+      heartbeatActor ! HeartBeatActor.Start
 
-    case Stop =>
+    case TwitterSupervisorActor.Stop =>
       logger.info(s"Supervisor received stop event. Shutting down downloader...")
 
       val downloaderFuture = gracefulStop(downloaderActor, FiniteDuration(30, TimeUnit.SECONDS), TwitterDownloaderActor.Stop)
-      Await.result(downloaderFuture, FiniteDuration(35, TimeUnit.SECONDS))
+      Await.ready(downloaderFuture, FiniteDuration(35, TimeUnit.SECONDS))
 
       logger.info("Shutting down processors...")
       val processorFuture = gracefulStop(processorRouter, FiniteDuration(60, TimeUnit.SECONDS))
-      Await.result(processorFuture, FiniteDuration(65, TimeUnit.SECONDS))
+      Await.ready(processorFuture, FiniteDuration(65, TimeUnit.SECONDS))
 
       logger.info("Shutting down savers...")
       val saverFuture = gracefulStop(unprocessedSaverActor, FiniteDuration(30, TimeUnit.SECONDS))
 
-      Await.result(saverFuture, FiniteDuration(35, TimeUnit.SECONDS))
+      Await.ready(saverFuture, FiniteDuration(35, TimeUnit.SECONDS))
 
       // Attempt to shutdown ActorSystem
       logger.info("Attempting to shut down actor system...")
@@ -59,12 +61,17 @@ class TwitterSupervisorActor(outputPath: File, keywords: Option[List[String]]) e
 
       sender() ! Stop
 
-    case WriteError(ex) =>
+    case TwitterSupervisorActor.WriteError(ex) =>
+    // TODO: Handle
 
     case other =>
-      logger.warning(s"Invalid message received from $sender:\n$other")
-
+      logger.warning(s"Invalid message received from ${sender()}:\n$other")
   }
+
+  override val supervisorStrategy =
+    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 minute) {
+      case _: Exception => Restart
+    }
 }
 
 object TwitterSupervisorActor {

@@ -6,7 +6,7 @@ name := "FoursquareDataCollector"
 
 version := "0.3-SNAPSHOT"
 
-scalaVersion := "2.11.6"
+scalaVersion := "2.11.7"
 mainClass in Compile := Some("datacollector.Application")
 
 libraryDependencies ++= List(

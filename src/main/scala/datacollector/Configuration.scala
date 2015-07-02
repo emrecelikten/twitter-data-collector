@@ -1,11 +1,13 @@
 package datacollector
 
+import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 import com.twitter.hbc.httpclient.auth.{ Authentication, OAuth1 }
 import com.typesafe.config.{ Config, ConfigFactory }
 
 import scala.collection.JavaConversions._
+import scala.concurrent.duration.{ FiniteDuration }
 import scala.util.Try
 import scala.util.matching.Regex
 
@@ -17,6 +19,15 @@ import scala.util.matching.Regex
 trait ConfigurationModule {
   protected val conf: Config
 
+  protected def safeLoad[T](getM: String => T, configurationKey: String): T = {
+    Try(getM(configurationKey)).getOrElse {
+      throw new RuntimeException(s"Error while reading configuration: Missing configuration key for '$configurationKey'!")
+    }
+  }
+
+  // Ugly
+  implicit protected def duration2FiniteDuration(duration: Duration): FiniteDuration = FiniteDuration(duration.toMillis, TimeUnit.MILLISECONDS)
+
   val twitterAuthentication: Authentication = {
     val consumerKey: String = safeLoad(conf.getString, "twitter.consumer.key")
     val consumerSecret: String = safeLoad(conf.getString, "twitter.consumer.secret")
@@ -26,10 +37,14 @@ trait ConfigurationModule {
     new OAuth1(consumerKey, consumerSecret, accessToken, accessSecret)
   }
 
-  val reconnectSleepDuration: Long = safeLoad(conf.getDuration(_, TimeUnit.MILLISECONDS), "twitter.duration.sleep.reconnect")
-  val queueRecheckSleepDuration: Long = safeLoad(conf.getDuration(_, TimeUnit.MILLISECONDS), "twitter.duration.sleep.queueRecheck")
-  val gracefulShutdownDuration: Long = safeLoad(conf.getDuration(_, TimeUnit.MILLISECONDS), "twitter.duration.gracefulShutdown")
-  val msgQueueWarningDuration: Long = safeLoad(conf.getDuration(_, TimeUnit.MILLISECONDS), "twitter.duration.queueWarning")
+  val reconnectSleepDuration: FiniteDuration = safeLoad(conf.getDuration(_), "twitter.duration.sleep.reconnect")
+  val reconnectLongSleepDuration: FiniteDuration = safeLoad(conf.getDuration(_), "twitter.duration.sleep.reconnectLong")
+  val queueRecheckSleepDuration: FiniteDuration = safeLoad(conf.getDuration(_), "twitter.duration.sleep.queueRecheck")
+  val msgQueueWarningDuration: FiniteDuration = safeLoad(conf.getDuration(_), "twitter.duration.queueWarning")
+
+  val gracefulShutdownDuration: FiniteDuration = safeLoad(conf.getDuration(_), "duration.gracefulShutdown")
+  val heartBeatDuration: FiniteDuration = safeLoad(conf.getDuration(_), "duration.heartBeat")
+  val emailOnHeartBeat: Boolean = safeLoad(conf.getBoolean(_), "email.emailOnHeartBeat")
 
   val keywords: Option[List[String]] = {
     val elems = safeLoad(conf.getStringList, "twitter.keywords").toList
@@ -42,12 +57,6 @@ trait ConfigurationModule {
   val eventQueueSize: Int = safeLoad(conf.getInt, "twitter.size.eventQueue")
   val msgQueueWarningSize: Int = safeLoad(conf.getInt, "twitter.size.queueWarning")
   val emailOnQueueWarning: Boolean = safeLoad(conf.getBoolean, "email.emailOnQueueWarning")
-
-  protected def safeLoad[T](getM: String => T, configurationKey: String): T = {
-    Try(getM(configurationKey)).getOrElse {
-      throw new RuntimeException(s"Error while reading configuration: Missing configuration key for '$configurationKey'!")
-    }
-  }
 
   val foursquareClientId: String = safeLoad(conf.getString, "foursquare.client.id")
   val foursquareClientSecret: String = safeLoad(conf.getString, "foursquare.client.secret")

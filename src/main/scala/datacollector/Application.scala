@@ -48,7 +48,7 @@ object Application {
         supervisorActor ! Start
 
         println("Type exit to quit.")
-        val waitingTime = FiniteDuration(Configuration.configuration.gracefulShutdownDuration, TimeUnit.MILLISECONDS)
+        val waitingTime = Configuration.configuration.gracefulShutdownDuration
         implicit val timeout: Timeout = Timeout(waitingTime)
 
         for (ln <- io.Source.stdin.getLines()) {

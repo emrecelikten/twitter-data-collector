@@ -15,6 +15,7 @@ import scala.concurrent.Future
  * @author Emre Çelikten
  */
 class FoursquareCheckinDownloaderActor(val configuration: ConfigurationModule) extends Actor {
+  // UNUSED CURRENTLY
   // TODO: Set a separate dispatcher for spray requests
   import context.dispatcher
   val pipeline: HttpRequest => Future[String] =

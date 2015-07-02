@@ -10,7 +10,7 @@ class TestLogger extends LoggerModule {
 
   override def warn(message: => String, sendEmail: Boolean)(implicit adapter: Perhaps[LoggingAdapter]): Unit = {}
 
-  override protected def log(message: => String, sendEmail: Boolean, loggingMethod: (String) => Unit): Unit = println(message)
+  override protected def log(message: => String, sendEmail: Boolean, loggingMethod: (String) => Unit): Unit = {}
 
   override def error(message: => String, sendEmail: Boolean)(implicit adapter: Perhaps[LoggingAdapter]): Unit = println(message)
 
