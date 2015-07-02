@@ -39,6 +39,8 @@ mappings in Universal <++= (packageBin in Compile, sourceDirectory ) map { (_, s
   Seq(logConf -> "conf/logback.xml", conf -> "conf/application.conf")
 }
 
+scriptClasspath ~= (cp => "../conf" +: cp)
+
 scalariformSettings
 
 ScalariformKeys.preferences := ScalariformKeys.preferences.value
