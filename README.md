@@ -1,6 +1,6 @@
 # Twitter data collector
 
-Tool for collecting data from Twitter streaming API. Requires Java 8.
+Tool for collecting data from Twitter streaming API. Requires Java 8. Built on top of [hbc-core](https://github.com/twitter/hbc) from Twitter.
 
 It managed to run for a few months without any crashes, but it is still a work in progress. Bug reports are very welcome.
 
