@@ -19,17 +19,12 @@ import scala.concurrent.duration._
 class TwitterSupervisorActor(outputPath: File, keywords: Option[List[String]]) extends Actor {
   private val logger = Logging(context.system, this)
 
-  private val unprocessedSaverActor = {
+  private val saverActor = {
     val filePrefix = "twitter-raw"
     context.actorOf(SaverActor.props(filePrefix), "twitter-raw-saver")
   }
 
-  private val processedSaverActor = {
-    val filePrefix = "twitter-processed"
-    context.actorOf(SaverActor.props(filePrefix), "processed-saver")
-  }
-
-  private val processorRouter = context.actorOf(TwitterProcessorRouter.props(unprocessedSaverActor.path, processedSaverActor.path), "processor-router")
+  private val processorRouter = context.actorOf(TwitterProcessorRouter.props(saverActor.path), "processor-router")
   private val downloaderActor = context.actorOf(TwitterDownloaderActor.props(processorRouter.path), "downloader")
   private val emailerActor = context.actorOf(Props[EmailerActor], "emailer")
   private val heartbeatActor = context.actorOf(HeartBeatActor.props(Map(downloaderActor.path -> "TwitterDownloaderActor")))
@@ -51,15 +46,13 @@ class TwitterSupervisorActor(outputPath: File, keywords: Option[List[String]]) e
       Await.ready(processorFuture, FiniteDuration(65, TimeUnit.SECONDS))
 
       logger.info("Shutting down savers...")
-      val saverFuture = gracefulStop(unprocessedSaverActor, FiniteDuration(30, TimeUnit.SECONDS))
+      val saverFuture = gracefulStop(saverActor, FiniteDuration(30, TimeUnit.SECONDS))
 
       Await.ready(saverFuture, FiniteDuration(35, TimeUnit.SECONDS))
 
       // Attempt to shutdown ActorSystem
       logger.info("Attempting to shut down actor system...")
       context.system.shutdown()
-
-      sender() ! Stop
 
     case TwitterSupervisorActor.WriteError(ex) =>
     // TODO: Handle

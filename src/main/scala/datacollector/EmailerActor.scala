@@ -55,7 +55,7 @@ class EmailerActor extends Actor {
     email.setAuthenticator(new DefaultAuthenticator(Configuration.configuration.emailUsername, Configuration.configuration.emailPassword))
     email.setSSLOnConnect(true)
     email.setFrom(Configuration.configuration.emailUsername)
-    email.setSubject("Data Collector report")
+    email.setSubject(s"Data Collector report: ${Configuration.configuration.collectorName}")
     email.setMsg(builder.toString())
 
     Configuration.configuration.emailAddresses.foreach(e => email.addTo(e))

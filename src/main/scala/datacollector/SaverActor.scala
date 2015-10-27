@@ -30,12 +30,13 @@ class SaverActor(val filePrefix: String, val configuration: ConfigurationModule)
 
           try {
             writer.close()
-            throw ex
           } catch {
             case ex: Exception =>
               Logger.error(s"Error while closing the writer after an error while writing to file $file!\n" + Utils.getStackTraceString(ex))
               throw ex
           }
+
+          throw ex
       }
     case other =>
       Logger.warn(s"Invalid message received from ${sender()}:\n$other")

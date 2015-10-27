@@ -1,15 +1,12 @@
 package datacollector
 
 import java.io.File
-import java.util.concurrent.TimeUnit
 
-import akka.actor.ActorSystem
-import akka.pattern.ask
+import akka.actor.{ ActorRef, ActorSystem }
 import akka.util.Timeout
 import datacollector.TwitterSupervisorActor.{ Start, Stop }
 
-import scala.concurrent.Await
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 
 /**
  * Entry object. Starts the actor system and actors.
@@ -17,6 +14,13 @@ import scala.concurrent.duration.FiniteDuration
  */
 object Application {
   var actorSystem: ActorSystem = _
+
+  def shutdownEverything(supervisorActor: ActorRef): Unit = {
+    supervisorActor ! Stop
+    // TODO: Get this from conf
+    actorSystem.awaitTermination(2.minutes)
+    Logger.info("Shutting down Redis ActorSystem.")
+  }
 
   def main(args: Array[String]) {
     if (!Configuration.init(sys.props.get("config").getOrElse("application.conf"))) {
@@ -47,19 +51,11 @@ object Application {
 
         supervisorActor ! Start
 
-        println("Type exit to quit.")
-        val waitingTime = Configuration.configuration.gracefulShutdownDuration
-        implicit val timeout: Timeout = Timeout(waitingTime)
+        sys.addShutdownHook(shutdownEverything(supervisorActor))
 
-        for (ln <- io.Source.stdin.getLines()) {
-          if (ln.compareTo("exit") == 0) {
-            println("Exit command received from user, starting graceful stop.")
-            val f = supervisorActor ? Stop
-            Await.result(f, waitingTime)
-            System.exit(0)
-          }
-        }
+        println("System active. Kill the process to initiate graceful shutdown. Forcibly killing the application (e.g. using kill -9) might cause data loss.")
       }
     }
   }
 }
+

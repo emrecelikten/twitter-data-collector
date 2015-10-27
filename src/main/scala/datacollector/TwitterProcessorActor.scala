@@ -10,7 +10,7 @@ import scala.util.matching.Regex
  *
  * @author Emre Çelikten
  */
-class TwitterProcessorActor(unprocessedSaverActorPath: ActorPath, processedSaverActorPath: ActorPath) extends Actor {
+class TwitterProcessorActor(saverActorPath: ActorPath) extends Actor {
   private implicit val loggingAdapter = Logging(context.system, this)
 
   Logger.info("ProcessorActor is online.")
@@ -18,8 +18,7 @@ class TwitterProcessorActor(unprocessedSaverActorPath: ActorPath, processedSaver
   override def receive: Receive = {
     case TweetMessage(tweet) =>
       if (TwitterProcessorActor.regex.findFirstIn(tweet).nonEmpty) {
-        context.actorSelection(unprocessedSaverActorPath) ! tweet
-        // TODO: Process?
+        context.actorSelection(saverActorPath) ! tweet
       } else Logger.debug(s"Invalid tweet received:\n$tweet")
     case other =>
       Logger.warn(s"Invalid message received from $sender:\n$other")
@@ -29,6 +28,6 @@ class TwitterProcessorActor(unprocessedSaverActorPath: ActorPath, processedSaver
 object TwitterProcessorActor {
   val regex: Regex = """"expanded_url":"http[s ]:\\/\\/www.swarmapp.com\\/c\\/\w+"""".r
 
-  def props(unprocessedSaverActorPath: ActorPath, processedSaverActorPath: ActorPath): Props =
-    Props(new TwitterProcessorActor(unprocessedSaverActorPath, processedSaverActorPath))
+  def props(saverActorPath: ActorPath): Props =
+    Props(new TwitterProcessorActor(saverActorPath))
 }

@@ -2,9 +2,9 @@ import scalariform.formatter.preferences.PreserveSpaceBeforeArguments
 
 enablePlugins(JavaAppPackaging)
 
-name := "FoursquareDataCollector"
+name := "TwitterDataCollector"
 
-version := "0.4-SNAPSHOT"
+version := "0.5-SNAPSHOT"
 
 scalaVersion := "2.11.7"
 mainClass in Compile := Some("datacollector.Application")
@@ -25,8 +25,8 @@ libraryDependencies ++= List(
 )
 
 maintainer := "Emre Çelikten"
-packageSummary := "Foursquare data collector"
-packageDescription := "Collects data from Twitter streaming API for Swarm checkins."
+packageSummary := "Twitter data collector"
+packageDescription := "Collects data from Twitter streaming API."
 
 mappings in (Compile, packageBin) ~= { _.filterNot{ case (_, filename) => (filename contains ".conf") || (filename contains ".xml") } }
 

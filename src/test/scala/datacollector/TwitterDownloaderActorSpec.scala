@@ -71,6 +71,7 @@ class TwitterDownloaderActorSpec(_system: ActorSystem) extends TestKit(_system)
 
   it should "restart properly" in withFixture { f =>
     f.underlying.msgQueue = f.msgQueue
+    f.underlying.eventQueue = f.eventQueue
     f.underlying.started = true
 
     f.actor ! TwitterDownloaderActor.Restart

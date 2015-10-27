@@ -58,11 +58,6 @@ trait ConfigurationModule {
   val msgQueueWarningSize: Int = safeLoad(conf.getInt, "twitter.size.queueWarning")
   val emailOnQueueWarning: Boolean = safeLoad(conf.getBoolean, "email.emailOnQueueWarning")
 
-  val foursquareClientId: String = safeLoad(conf.getString, "foursquare.client.id")
-  val foursquareClientSecret: String = safeLoad(conf.getString, "foursquare.client.secret")
-  val foursquareAccessToken: String = safeLoad(conf.getString, "foursquare.access.token")
-  val foursquareResolveUrl: String = safeLoad(conf.getString, "foursquare.resolveUrl")
-
   val outputPath: String = safeLoad(conf.getString, "outputPath")
 
   val emailsEnabled: Boolean = safeLoad(conf.getBoolean, "email.enableEmails")
@@ -71,6 +66,8 @@ trait ConfigurationModule {
   val emailSmtpPort: Int = safeLoad(conf.getInt, "email.smtp.port")
   val emailUsername: String = safeLoad(conf.getString, "email.username")
   val emailPassword: String = safeLoad(conf.getString, "email.password")
+
+  val collectorName: String = safeLoad(conf.getString, "email.collectorName")
 }
 
 object Configuration {

@@ -9,10 +9,10 @@ import akka.routing.{ ActorRefRoutee, Router, SmallestMailboxRoutingLogic }
  *
  * @author Emre Çelikten
  */
-class TwitterProcessorRouter(unprocessedSaverActorPath: ActorPath, processedSaverActorPath: ActorPath, numWorkers: Int = 5) extends Actor {
+class TwitterProcessorRouter(saverActorPath: ActorPath, numWorkers: Int = 5) extends Actor {
   private var router = {
     val workers = Vector.fill(numWorkers) {
-      val r = context.actorOf(TwitterProcessorActor.props(unprocessedSaverActorPath, processedSaverActorPath))
+      val r = context.actorOf(TwitterProcessorActor.props(saverActorPath))
       context watch r
       ActorRefRoutee(r)
     }
@@ -27,7 +27,7 @@ class TwitterProcessorRouter(unprocessedSaverActorPath: ActorPath, processedSave
       router.route(msg, sender())
     case Terminated(a) =>
       router = router.removeRoutee(a)
-      val r = context.actorOf(TwitterProcessorActor.props(unprocessedSaverActorPath, processedSaverActorPath))
+      val r = context.actorOf(TwitterProcessorActor.props(saverActorPath))
       context watch r
       router = router.addRoutee(r)
     case other =>
@@ -36,6 +36,6 @@ class TwitterProcessorRouter(unprocessedSaverActorPath: ActorPath, processedSave
 }
 
 object TwitterProcessorRouter {
-  def props(unprocessedSaverActorPath: ActorPath, processedSaverActorPath: ActorPath): Props =
-    Props(new TwitterProcessorRouter(unprocessedSaverActorPath, processedSaverActorPath))
+  def props(saverActorPath: ActorPath): Props =
+    Props(new TwitterProcessorRouter(saverActorPath))
 }
