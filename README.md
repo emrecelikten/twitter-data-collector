@@ -4,11 +4,11 @@ Tool for collecting data from Twitter streaming API. Requires Java 8.
 
 It managed to run for a few months without any crashes, but it is still a work in progress. Bug reports are very welcome.
 
-## Usage:
+## Usage
 
 First you need to get an API key from Twitter.
 
-You need SBT <http://www.scala-sbt.org/> to build the project. After launching SBT in the project folder, compile the binaries as
+You need [SBT](http://www.scala-sbt.org/) to build the project. After launching SBT in the project folder, compile the binaries as
 
 ```
 $ sbt universal:packageBin
@@ -24,7 +24,8 @@ $ ./bin/twitterdatacollector -Dconfig=application.conf
 
 Make sure that you have lots of disk space.
 
-### Future tasks:
+## Future tasks
+
 Tests.
 Error handling.
 
